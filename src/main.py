@@ -3,6 +3,8 @@ from discord.ext import commands
 import logging
 
 from config import DISCORD_TOKEN, CANAL_JARVIS, COMMAND_PREFIX, INTENTS, DISCORD_LOG_PATH
+from services.control import ControlClient
+from config.api import APIConfig
 
 bot = commands.Bot(
     command_prefix=COMMAND_PREFIX,
@@ -18,6 +20,13 @@ def main():
             if filename.endswith('.py') and not filename.startswith('_'):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
 
+        bot.control = ControlClient(
+            url=APIConfig.CONTROL,
+            token=DISCORD_TOKEN,
+            session_id='discord.bot',
+        )
+        await bot.control.connect()
+        
         print(f'Logged in as {bot.user.name} - {bot.user.id}')
         print('------')
         
