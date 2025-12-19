@@ -14,7 +14,7 @@ from utils.utils import mono_to_stereo, stereo_to_mono
 
 class DiscordIO:
     def __init__(self):
-        self.server = WebSocketClient(APIConfig.CONNECT)
+        self.server: WebSocketClient = None
         self.vc_client: voice_recv.VoiceRecvClient | None = None
         self.pipeline = None
 
@@ -26,15 +26,15 @@ class DiscordIO:
         self._tasks: list[asyncio.Task] = []
         self._connected = False
 
-    async def connect(self, channel: discord.VoiceChannel):
+    async def connect(self, channel: discord.VoiceChannel, url = None):
         """Connect to a Discord voice channel and set up the audio pipeline and server connection."""
         if self._connected:
             await self.disconnect()
         self._connected = True
+        self.server = WebSocketClient(url or APIConfig.CONNECT)
 
         # connect to Discord
         self.vc_client: voice_recv.VoiceRecvClient = await channel.connect(cls=voice_recv.VoiceRecvClient)
-        #print("Esto nunca se imprime")
         await asyncio.sleep(0.5)
 
         loop = asyncio.get_running_loop()
