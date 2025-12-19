@@ -5,7 +5,8 @@ from config.api import APIConfig
 import httpx
 from contextlib import suppress
 from utils.DiscordIO import DiscordIO
-
+import asyncio
+from services.control import ControlClient
 
 class Speech(commands.Cog):
     """Orquest audio between Discord and the coordinator."""
@@ -18,7 +19,16 @@ class Speech(commands.Cog):
     async def join(self, ctx: commands.Context):
         if not ctx.author.voice or not ctx.author.voice.channel:
             return await ctx.send("❌ Debes estar en un canal de voz.")
-        await self.DiscordIO.connect(ctx.author.voice.channel)
+        
+        control: ControlClient = self.bot.control
+        await control.negotiate()
+
+        try:
+            await asyncio.wait_for(control.audio_ready.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            return await ctx.send("❌ No se pudo negociar audio.")
+
+        await self.DiscordIO.connect(ctx.author.voice.channel, url=control.audio_url)
         await ctx.send(f"🎧 Conectado a {ctx.author.voice.channel.name}")
 
     @commands.command(name="leave", aliases=["disconnect"]) 
